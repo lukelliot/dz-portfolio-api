@@ -1,0 +1,231 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: dz-portfolio-api
+Transform:
+- AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Tracing: Active
+  Api:
+    TracingEnabled: true
+    OpenApiVersion: 3.0.1
+Resources:
+  ServerlessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      AccessLogSetting:
+        DestinationArn:
+          Fn::GetAtt:
+          - ServerlessRestApiLogs
+          - Arn
+      StageName: v1
+      Cors:
+        AllowCredentials: true
+        AllowHeaders: '*'
+        AllowOrigin: '*'
+        MaxAge: '600'
+  ServerlessRestApiLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/api/${ServerlessRestApi}
+      RetentionInDays: 30
+  OptionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 100
+      InlineCode: "exports.handler = () => {\n  const response = {\n    statusCode:\
+        \ 204\n    headers: {\n      'Access-Control-Allow-Headers': '*',\n      'Access-Control-Allow-Origin':\
+        \ '*', // Allow from anywhere\n      'Access-Control-Allow-Methods': '*',\
+        \ // Allow only GET request\n    }\n  }\n  console.log('OPTIONS', response)\n\
+        \  return response\n}\n"
+      Events:
+        indexOptions:
+          Type: Api
+          Properties:
+            Path: /
+            Method: OPTIONS
+            RestApiId:
+              Ref: ServerlessRestApi
+        getByIdOptions:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: OPTIONS
+            RestApiId:
+              Ref: ServerlessRestApi
+        statusOptions:
+          Type: Api
+          Properties:
+            Path: /status
+            Method: OPTIONS
+            RestApiId:
+              Ref: ServerlessRestApi
+  OptionsFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${OptionsFunction}
+      RetentionInDays: 30
+  getAllItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-all-items.getAllItemsHandler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP get method to get all items from
+        a DynamoDB table.
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: SampleTable
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+            RestApiId:
+              Ref: ServerlessRestApi
+      CodeUri: getAllItemsFunction
+    Metadata:
+      SamResourceId: getAllItemsFunction
+  GetAllItemsFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${getAllItemsFunction}
+      RetentionInDays: 30
+  getByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-by-id.getByIdHandler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP get method to get one item by
+        id from a DynamoDB table.
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: SampleTable
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: GET
+            RestApiId:
+              Ref: ServerlessRestApi
+      CodeUri: getByIdFunction
+    Metadata:
+      SamResourceId: getByIdFunction
+  GetByIdFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${getByIdFunction}
+      RetentionInDays: 30
+  putItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/put-item.putItemHandler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP post method to add one item to
+        a DynamoDB table.
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: SampleTable
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId:
+              Ref: ServerlessRestApi
+      CodeUri: putItemFunction
+    Metadata:
+      SamResourceId: putItemFunction
+  PutItemFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${putItemFunction}
+      RetentionInDays: 30
+  status:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/status.handler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP post method to add one item to
+        a DynamoDB table.
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: SampleTable
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /status
+            Method: GET
+            RestApiId:
+              Ref: ServerlessRestApi
+      CodeUri: status
+    Metadata:
+      SamResourceId: status
+  StatusFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${status}
+      RetentionInDays: 30
+  SampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+Outputs:
+  WebEndpoint:
+    Description: API Gateway endpoint URL for Prod stage
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ServerlessRestApi.Stage}/

@@ -25,21 +25,15 @@ exports.putItemHandler = async (event) => {
     // Creates a new item, or replaces an old item with a new item
     // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property
     var params = {
-        TableName: tableName,
-        Item: { id: id, name: name }
+        TableName : tableName,
+        Item: { id : id, name: name }
     };
 
     const result = await docClient.put(params).promise();
 
     const response = {
         statusCode: 200,
-        body: JSON.stringify(body),
-        headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Origin': '*', // Allow from anywhere
-            'Access-Control-Allow-Methods': 'GET', // Allow only GET request
-        },
+        body: JSON.stringify(body)
     };
 
     // All log statements are written to CloudWatch

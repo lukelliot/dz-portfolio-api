@@ -51,15 +51,14 @@ Resources:
       MemorySize: 128
       Timeout: 100
       InlineCode: |
-        exports.handler = async function() {
+        exports.handler = () => {
           const response = {
-            statusCode: 204,
+            statusCode: 204
             headers: {
               'Access-Control-Allow-Headers': '*',
               'Access-Control-Allow-Origin': '*', // Allow from anywhere
               'Access-Control-Allow-Methods': '*', // Allow only GET request
-            },
-            isBase64Encoded: false,
+            }
           }
           console.log('OPTIONS', response)
           return response
@@ -90,6 +89,8 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${OptionsFunction}
       RetentionInDays: 30
+
+  # Each Lambda function is defined by properties:
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
   # This is a Lambda function config associated with the source code: get-all-items.js
@@ -118,6 +119,12 @@ Resources:
             Path: /
             Method: GET
             RestApiId: !Ref ServerlessRestApi
+        # Options:
+        #   Type: Api
+        #   Properties:
+        #     Path: /
+        #     Method: OPTIONS
+        #     RestApiId: !Ref ServerlessRestApi
 
   GetAllItemsFunctionLogs:
     Type: AWS::Logs::LogGroup
@@ -153,6 +160,12 @@ Resources:
             Path: /{id}
             Method: GET
             RestApiId: !Ref ServerlessRestApi
+        # Options:
+        #   Type: Api
+        #   Properties:
+        #     Path: /
+        #     Method: OPTIONS
+        #     RestApiId: !Ref ServerlessRestApi
 
   GetByIdFunctionLogs:
     Type: AWS::Logs::LogGroup
@@ -188,6 +201,12 @@ Resources:
             Path: /
             Method: POST
             RestApiId: !Ref ServerlessRestApi
+        # Options:
+        #   Type: Api
+        #   Properties:
+        #     Path: /
+        #     Method: OPTIONS
+        #     RestApiId: !Ref ServerlessRestApi
 
   PutItemFunctionLogs:
     Type: AWS::Logs::LogGroup
@@ -220,6 +239,12 @@ Resources:
             Path: /status
             Method: GET
             RestApiId: !Ref ServerlessRestApi
+        # Options:
+        #   Type: Api
+        #   Properties:
+        #     Path: /status
+        #     Method: OPTIONS
+        #     RestApiId: !Ref ServerlessRestApi
 
   StatusFunctionLogs:
     Type: AWS::Logs::LogGroup
